@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HelloMQTT</string>
+    <string name="topicLabel">topic</string>
+    <string name="messageLabel">message</string>
+     <string name="hello">Hello World, VideoViewDemo!</string>
+    <string name="app_name_1">Video streaming</string>
+</resources>
