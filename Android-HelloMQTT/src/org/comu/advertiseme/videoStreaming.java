@@ -11,6 +11,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -25,25 +26,33 @@ public class videoStreaming extends Activity {
 	private static final String TAG = "VideoViewDemo";
 
 	private VideoView mVideoView;
-	private EditText mPath;
+	// private EditText mPath;
 	private ImageButton mPlay;
 	private ImageButton mPause;
 	private ImageButton mReset;
 	private ImageButton mStop;
 	private String current;
 
+	private String videoUrl = "url yok";
+
 	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
+
 		setContentView(R.layout.videotools);
 		mVideoView = (VideoView) findViewById(R.id.surface_view);
-		mPath = (EditText) findViewById(R.id.path);
-		mPath.setText("http://daily3gp.com/vids/747.3gp");
+
+		// mPath = (EditText) findViewById(R.id.path);
+		// mPath.setText("http://daily3gp.com/vids/747.3gp");
+
 		mPlay = (ImageButton) findViewById(R.id.play);
 		mPause = (ImageButton) findViewById(R.id.pause);
 		mReset = (ImageButton) findViewById(R.id.reset);
 		mStop = (ImageButton) findViewById(R.id.stop);
+		Intent i = getIntent();
 
+		// Receiving the Data
+		videoUrl = i.getStringExtra("url");
 		mPlay.setOnClickListener(new OnClickListener() {
 			public void onClick(View view) {
 				playVideo();
@@ -84,8 +93,9 @@ public class videoStreaming extends Activity {
 	private void playVideo() {
 		try {
 
-			final String path = mPath.getText().toString();
-			Log.v(TAG, "path: " + path);
+			String path = videoUrl; // mPath.getText().toString();
+			Log.v(TAG, "path------>: " + path);
+
 			if (path == null || path.length() == 0) {
 				Toast.makeText(videoStreaming.this, "File URL/path is empty",
 						Toast.LENGTH_LONG).show();
@@ -102,7 +112,7 @@ public class videoStreaming extends Activity {
 				mVideoView.setVideoPath(getDataSource(path));
 				mVideoView.start();
 				mVideoView.requestFocus();
-				Log.d("eror is here", "108");
+
 			}
 		} catch (Exception e) {
 			Log.e(TAG, "error: " + e.getMessage(), e);

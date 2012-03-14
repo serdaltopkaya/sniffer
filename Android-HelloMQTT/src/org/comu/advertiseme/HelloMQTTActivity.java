@@ -8,6 +8,7 @@ package org.comu.advertiseme;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -20,6 +21,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -45,20 +47,22 @@ public class HelloMQTTActivity extends Activity {
 	private Cipher dcipher;
 	private String Key = "1234567812345678";
 	final static String broker = "tcp://10.0.2.2:1883";
-	
-	private ArrayList<HashMap<String, Object>> applicaationAtribute;
-	static final String KEY_ID = "id";
-	static final String KEY_NAME = "name";
-	
+
+	private ArrayList<HashMap<String, String>> applicaationAtribute;
+	static String name = "name";
+	static String dataType = "dataType";
+	static String url = "url";
+	static String appType = "appType";
+	static String time = "time";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-         
-		//to do fullscreen
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, 
-                                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+		// to do fullscreen
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
 		setContentView(R.layout.main);
 		topicView = (TextView) findViewById(R.id.topic);
@@ -75,7 +79,7 @@ public class HelloMQTTActivity extends Activity {
 		}
 	};
 
-	private boolean connect() {             
+	private boolean connect() {
 		try {
 			topicView.setText("waiting for message");
 			messageView.setText(android_id);
@@ -83,6 +87,7 @@ public class HelloMQTTActivity extends Activity {
 			client = (MqttClient) MqttClient.createMqttClient(broker, null);
 			client.registerSimpleHandler(new MessageHandler());
 			client.connect("HM" + android_id, true, (short) 240);
+
 			String topics[] = { "aaa" };
 			int qos[] = { 1 };
 			client.subscribe(topics, qos);
@@ -95,39 +100,101 @@ public class HelloMQTTActivity extends Activity {
 
 	@SuppressWarnings("unused")
 	private class MessageHandler implements MqttSimpleCallback {
-	
+
 		public void publishArrived(String _topic, byte[] payload, int qos,
 				boolean retained) throws Exception {
 			String _message = new String(payload);
 			Bundle b = new Bundle();
-			String decryptMessage =new String(decrypt(_message));
-			
-			//we got encryted data and decrypted now we have xml data to parsing
-			
+			String decryptMessage = new String(decrypt(_message));
+
+			// we got encryted data and decrypted now we have xml data to
+			// parsing
+
 			XMLfunctions parser = new XMLfunctions();
-			 Document doc = parser.getDomElement(decryptMessage); // getting DOM element
-			 NodeList nl = doc.getElementsByTagName("ApplicationAttributes");
-				// looping through all item nodes <item>
+			Document doc = parser.getDomElement(decryptMessage);// getting DOM
+																// element
+			NodeList nl = doc.getElementsByTagName("ApplicationAttributes");
+			// looping through all item nodes <item>
+			applicaationAtribute = new ArrayList<HashMap<String, String>>();
+			for (int i = 0; i < nl.getLength(); i++) {
 
-				for (int i = 0; i < nl.getLength(); i++) {
-					// creating new HashMap
-					HashMap<String, Object> map = new HashMap<String, Object>();
-					Element e = (Element) nl.item(i);
-					// adding each child node to HashMap key => value
-					map.put(KEY_ID, parser.getValue(e, KEY_ID));
-					map.put(KEY_NAME, parser.getValue(e, KEY_NAME));
-					 
+				// creating new HashMap
+				HashMap<String, String> map = new HashMap<String, String>();
+				Element e = (Element) nl.item(i);
 
-					// adding HashList to ArrayList
-					applicaationAtribute.add(map);
-				}
-			
-			b.putString("topic", _topic);
-			b.putString("message", decryptMessage);
+				// adding each child node to HashMap key => value
+				map.put(name, parser.getValue(e, name));
+				Log.d("126", parser.getValue(e, name));
+				map.put(dataType, parser.getValue(e, dataType));
+				Log.d("127", parser.getValue(e, dataType));
+				map.put(url, parser.getValue(e, url));
+				Log.d("128", parser.getValue(e, url));
+				map.put(time, parser.getValue(e, time));
+				Log.d("129", parser.getValue(e, time));
+
+				// adding HashList to ArrayList
+				applicaationAtribute.add(map);
+
+			}
+
 			Message msg = handler.obtainMessage();
-			msg.setData(b);
-			handler.sendMessage(msg);
 			Log.d("MQTT", _message);
+
+			appType = applicaationAtribute.get(0).get("dataType");
+
+			b.putString("topic", appType);
+			b.putString("message", applicaationAtribute.get(0).get("url"));
+
+			Message msg1 = handler.obtainMessage();
+			msg.setData(b);
+
+			handler.sendMessage(msg1);
+			Log.d("MQTT", _message);
+
+			if (appType.equals("video")) {
+
+				// Starting a new Intent
+				Intent nextScreen = new Intent(getApplicationContext(),
+						videoStreaming.class);
+
+				// Sending data to another Activity
+				nextScreen.putExtra("url",
+						applicaationAtribute.get(0).get("url"));
+				startActivity(nextScreen);
+
+				// test edilecek
+				// moveTaskToBack (true);
+			}
+			if (appType.equals("web")) {
+
+				// Starting a new Intent
+				Intent nextScreen1 = new Intent(getApplicationContext(),
+						WebViewActivity.class);
+
+				// Sending data to another Activity
+				nextScreen1.putExtra("url",
+						applicaationAtribute.get(0).get("url"));
+				startActivity(nextScreen1);
+
+				// test edilecek
+				// moveTaskToBack (true);
+			}
+			
+			
+			if (appType.equals("image")) {
+
+				// Starting a new Intent
+				Intent nextScreen2 = new Intent(getApplicationContext(),
+						ImageManager.class);
+
+				// Sending data to another Activity
+				nextScreen2.putExtra("url",
+						applicaationAtribute.get(0).get("url"));
+				startActivity(nextScreen2);
+
+				// test edilecek
+				// moveTaskToBack (true);
+			}
 
 		}
 
@@ -151,35 +218,40 @@ public class HelloMQTTActivity extends Activity {
 				}
 			});
 		}
-		//to turn byte incomming hex 
-		public  byte[] hexToBytes(String str) {
-			if (str==null) {
+
+		// to turn byte incomming hex
+		public byte[] hexToBytes(String str) {
+			if (str == null) {
 				return null;
 			} else if (str.length() < 2) {
 				return null;
 			} else {
 				int len = str.length() / 2;
 				byte[] buffer = new byte[len];
-				for (int i=0; i<len; i++) {
-					buffer[i] = (byte) Integer.parseInt(str.substring(i*2,i*2+2),16);
+				for (int i = 0; i < len; i++) {
+					buffer[i] = (byte) Integer.parseInt(
+							str.substring(i * 2, i * 2 + 2), 16);
 				}
-			System.out.println(buffer.toString());	return buffer;
+				System.out.println(buffer.toString());
+				return buffer;
 			}
 		}
-		  //decrypting incomming encoded hex string
+
+		// decrypting incomming encoded hex string
 		public byte[] decrypt(String code) throws Exception {
 			if (code == null || code.length() == 0)
 				throw new Exception("Empty string");
 			byte[] decrypted = null;
-			
+
 			try {
 				ivspec = new IvParameterSpec(iv.getBytes());
-				keyspec = new SecretKeySpec(Key.getBytes(), "AES");	
-				dcipher= Cipher.getInstance("AES/CBC/NoPadding");
-				dcipher.init(Cipher.DECRYPT_MODE, keyspec, ivspec); Log.v("131", code); 
-				 
-				 decrypted = dcipher.doFinal(hexToBytes(code));
-				Log.v("133", code);             
+				keyspec = new SecretKeySpec(Key.getBytes(), "AES");
+				dcipher = Cipher.getInstance("AES/CBC/NoPadding");
+				dcipher.init(Cipher.DECRYPT_MODE, keyspec, ivspec);
+				Log.v("131", code);
+
+				decrypted = dcipher.doFinal(hexToBytes(code));
+				Log.v("133", code);
 			} catch (Exception e) {
 				throw new Exception("[decrypt] " + e.getMessage());
 			}
